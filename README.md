@@ -1,9 +1,20 @@
-# Описание проекта
-
-В этом репозитории лежит код для проекта.
-
+# Запуск среды и обучения агентов
+Нужно установить и запустить Docker-контейнер с симулятором.
+Перед этим создать папки `starpu_home`, `cache_hf` и `proj_dir` в директории, в которой запускается контейнер.
+```bash
+sudo docker pull sivtsovdt/graph_agent:v2-iter-based
+# Для систем с GPU (необходим пакет nvidia-container-toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#installation-guide)
+# sudo docker run --gpus all --network host -v starpu_home:/home/jovyan/sivtsov -v cache_hf:/workspace/cache_hf -v proj_dir:/workspace/proj_dir -it sivtsovdt/graph_agent:v2-iter-based -- /bin/bash
+# Для систем без GPU
+sudo docker run --network host -v starpu_home:/home/jovyan/sivtsov -v cache_hf:/workspace/cache_hf -v proj_dir:/workspace/proj_dir -it sivtsovdt/graph_agent:v2-iter-based -- /bin/bash
+```
+В контейнере запустить Jupyter Lab
+```bash
+jupyter lab --allow-root
+```
+И скопировать в директорию `workspace` файл `train_agent.ipynb`
 ## Постановка задачи
-
+Более подробное описание [тут](Мат__постановка_задачи (4).pdf)
 ### Среда (Environment)
 Наша среда — это GraphRunner и сам вычислительный граф.
 
@@ -24,8 +35,6 @@
   - GPU
   - Оба типа (mixed)
 
-**Упрощение:**  
-Начнем с того, что агент для каждого узла выбирает предпочтительный тип устройства (CPU или GPU). Приоритет будем пока назначать по простой схеме (например, как в dynamic, но с учетом выбора устройства).
 
 ### Награда (Reward)
 Сигнал обратной связи, показывающий, насколько хорошо агент справился. Логично использовать отрицательное время выполнения всего графа (-timings). Чем меньше время, тем больше награда.
@@ -36,39 +45,3 @@
 
 ### Алгоритм PPO
 Использует Actor и Critic для обновления политики таким образом, чтобы максимизировать награду, избегая слишком больших изменений политики на каждом шаге (отсюда "Proximal").
-
-## Следующие шаги
-
-1. **Интеграция с `AgentTrainer`:**
-   - Нужно создать `AgentTrainer` (или адаптировать существующий), который будет управлять циклом обучения.
-   - `AgentTrainer.step` будет получать `graph`, `timings`, `done` от `Runner`.
-   - В `step` нужно будет вычислить награду (например, `-makespan` или `1 / makespan`).
-   - Данные из `agent.episode_buffer` (states, actions, log_probs, values) и вычисленная награда для *каждого* шага (узла) должны быть добавлены в `PPOBuffer`. Важно правильно обработать `done` (маркер конца графа/эпизода).
-   - Когда `PPOBuffer` накопит достаточно данных (например, `update_timestep` шагов), вызвать `agent.update(ppo_buffer)` и очистить буфер (`ppo_buffer.clear()`).
-
-2. **Вычисление награды:**
-   Определить, как вычисляется награда. Варианты:
-   - Простейший: одна награда для всего графа в конце, равная `-makespan`
-   - Более сложный: "reward shaping", где промежуточные шаги получают награду (например, на основе अनुमानित времени выполнения), но это сложнее и может привести к неоптимальным локальным решениям.
-   
-   **Начнем с награды в конце эпизода.**
-
-3. **Определение `state_dim`:**
-   Убедиться, что `state_dim` в конструкторе агента соответствует размеру вектора, возвращаемого `_get_state`. Сейчас это 6.
-
-4. **Гиперпараметры:**
-   Настроить гиперпараметры PPO:
-   - `lr_actor`
-   - `lr_critic`
-   - `gamma`
-   - `K_epochs`
-   - `eps_clip`
-   - размер буфера
-   - `update_timestep`
-
-5. **Логирование:**
-   Добавить логирование (например, с помощью TensorBoard или `wandb`) для отслеживания:
-   - наград
-   - потерь
-   - makespan
-   - других метрик
