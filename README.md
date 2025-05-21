@@ -14,7 +14,7 @@ jupyter lab --allow-root
 ```
 И скопировать в директорию `workspace` файл `train_agent.ipynb`
 ## Постановка задачи
-Более подробное описание [тут](Мат__постановка_задачи (4).pdf)
+Более подробное описание [тут](https://github.com/c0lbarator/rl-sched-project/blob/cbf0b7ad5265da454c88da9350d02c84c4f5d5a1/%D0%9C%D0%B0%D1%82__%D0%BF%D0%BE%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0_%D0%B7%D0%B0%D0%B4%D0%B0%D1%87%D0%B8%20(4).pdf)
 ### Среда (Environment)
 Наша среда — это GraphRunner и сам вычислительный граф.
 
